@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investigación: Arquitectura y Evolución de Sistemas Computacionales</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #1F2056;
+      --bg-alt: #252861;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --primary: #22d3ee;
+      --accent: #a78bfa;
+      --warn: #f5a524;
+      --card: #252861cc;
+      --border: #3a3f7a;
+      --radius: 18px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 80% -10%, #2a2f6e 0%, var(--bg) 45%),
+                  radial-gradient(900px 600px at -10% 10%, #252861 0%, var(--bg) 42%),
+                  var(--bg);
+      line-height: 1.65;
+      letter-spacing: .2px;
+    }
+
+    body::before {
+      content: "";
+      position: fixed; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom, rgba(255,255,255,0.02), rgba(255,255,255,0.02) 2px,
+        transparent 2px, transparent 4px
+      );
+      mix-blend-mode: soft-light;
+    }
+
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .wrapper { max-width: 1100px; margin: 0 auto; padding: 0 18px; }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+      background: rgba(31, 32, 86, 0.95);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; padding: 14px 0;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .logo {
+      width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+      background: radial-gradient(80% 80% at 30% 30%, var(--primary), transparent 60%),
+                  radial-gradient(60% 60% at 70% 70%, var(--accent), transparent 60%),
+                  #252861;
+      box-shadow: inset 0 0 12px rgba(34, 211, 238, .35), 0 0 0 1px #1e293b;
+    }
+
+    .title { font-family: 'Orbitron', sans-serif; font-weight: 700; letter-spacing: 1px; font-size: 0.95rem; }
+
+    .menu { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .menu a { padding: 8px 10px; border-radius: 12px; font-weight: 600; color: var(--text); cursor: pointer; font-size: 0.9rem; }
+    .menu a:hover { background: #111827; }
+
+    .hamburger { display: none; background: none; border: 1px solid var(--border); border-radius: 12px; padding: 8px; color: var(--text); font-size: 18px; cursor: pointer; }
+
+    .hero { padding: 140px 0 40px; text-align: center; }
+    .badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: #252861; border: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+    .hero h1 { font-family: 'Orbitron', sans-serif; font-size: clamp(28px, 5vw, 46px); margin: 14px 0 8px; letter-spacing: .8px; }
+    .hero p { color: var(--muted); max-width: 760px; margin: 0 auto; }
+    .cta { margin-top: 20px; display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .btn { padding: 12px 16px; border-radius: 14px; border: 1px solid var(--border); background: #252861; color: var(--text); font-weight: 700; }
+    .btn.primary { background: linear-gradient(90deg, #0ea5e9, #22d3ee); color: #001018; border: none; box-shadow: var(--shadow); }
+
+    section { padding: 64px 0; scroll-margin-top: 80px; }
+    h2 { font-family: 'Orbitron', sans-serif; font-size: clamp(22px, 4vw, 30px); margin: 0 0 18px; }
+    h3 { font-size: 1.4rem; margin: 24px 0 12px; color: var(--primary); }
+    h4 { font-size: 1.1rem; margin: 18px 0 10px; color: var(--accent); }
+    .lead { color: var(--muted); margin-bottom: 26px; line-height: 1.8; }
+
+    .card {
+      background: linear-gradient(180deg, rgba(16,24,39,.65), rgba(11,15,23,.65));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .card::after {
+      content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
+      background: linear-gradient(135deg, transparent 70%, rgba(34,211,238,.08));
+      mask: linear-gradient(#000, transparent 60%);
+    }
+
+    .card p { margin-bottom: 16px; line-height: 1.8; }
+    .card ul, .card ol { margin: 16px 0; padding-left: 24px; line-height: 1.9; }
+    .card li { margin-bottom: 10px; }
+    .card strong { color: var(--primary); }
+    .card em { color: var(--accent); font-style: italic; }
+
+    .timeline { position: relative; margin-top: 16px; }
+    .timeline::before { content: ""; position: absolute; left: 12px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, var(--primary), transparent 80%); }
+    .t-item { position: relative; padding-left: 32px; margin: 18px 0; }
+    .t-bullet { position: absolute; left: 6px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 3px rgba(34,211,238,.15); }
+    .t-year { font-weight: 800; color: var(--accent); display: inline-block; margin-bottom: 4px; }
+
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { padding: 12px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { color: var(--muted); font-weight: 700; background: rgba(37, 40, 97, 0.3); }
+    td { color: var(--text); }
+
+    dl { display: grid; grid-template-columns: 1fr 2.2fr; gap: 8px 16px; margin: 16px 0; }
+    dt { color: var(--accent); font-weight: 800; }
+    dd { margin: 0; color: var(--text); line-height: 1.7; }
+
+    .highlight-box {
+      background: rgba(34, 211, 238, 0.1);
+      border-left: 4px solid var(--primary);
+      padding: 16px 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+      overflow: auto;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: linear-gradient(180deg, rgba(37, 40, 97, 0.98), rgba(31, 32, 86, 0.98));
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.3s ease;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      color: var(--primary);
+    }
+
+    .close-modal {
+      background: none;
+      border: 2px solid var(--border);
+      color: var(--text);
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 4px 12px;
+      border-radius: 8px;
+      transition: all 0.3s;
+      line-height: 1;
+    }
+
+    .close-modal:hover {
+      background: var(--primary);
+      color: #000;
+      border-color: var(--primary);
+      transform: rotate(90deg);
+    }
+
+    .referencias-lista {
+      display: grid;
+      gap: 16px;
+      background: rgba(37, 40, 97, 0.5);
+      padding: 24px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .referencias-lista p {
+      margin: 0;
+      padding-left: 28px;
+      text-indent: -28px;
+      line-height: 1.8;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    footer { padding: 36px 0 60px; border-top: 1px solid var(--border); color: var(--muted); }
+    .small { font-size: 12px; opacity: .9; }
+
+    @media (max-width: 980px) {
+      dl { grid-template-columns: 1fr; }
+      .nav { flex-wrap: wrap; }
+    }
+    @media (max-width: 680px) {
+      .menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background: rgba(31, 32, 86, 0.98); flex-direction: column; padding: 16px; border-bottom: 1px solid var(--border); }
+      .menu a { width: 100%; text-align: left; }
+      .hamburger { display: inline-flex; }
+      .hero { padding-top: 100px; }
+      .title { font-size: 0.85rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav class="nav wrapper" aria-label="Principal">
+      <div class="brand" aria-hidden="true">
+        <div class="logo" role="img" aria-label="Logo"></div>
+        <span class="title">Arquitectura Computacional</span>
+      </div>
+
+      <div class="menu" role="navigation" aria-label="Menú principal">
+        <a href="#inicio">Inicio</a>
+        <a href="#electronica">Electrónica</a>
+        <a href="#hardware-software">HW/SW</a>
+        <a href="#kernel">Kernel</a>
+        <a href="#micro">Microprocesador</a>
+        <a href="#redes">Redes</a>
+        <a href="#componentes">Componentes</a>
+        <a id="btnReferencias" aria-haspopup="dialog">Referencias</a>
+      </div>
+
+      <button class="hamburger" aria-label="Abrir menú" aria-expanded="false">☰</button>
+    </nav>
+  </header>
+
+  <main class="wrapper" role="main">
+    <section class="hero" id="inicio" aria-labelledby="hero-title">
+      <span class="badge">Investigación Académica</span>
+      <h1 id="hero-title">Arquitectura y Evolución de los Sistemas Computacionales</h1>
+      <p class="lead">Investigación exhaustiva sobre los fundamentos físicos, históricos y técnicos que conforman los sistemas de cómputo modernos, desde la electrónica básica hasta las redes globales de comunicación.</p>
+      <div class="cta" role="group" aria-label="Acciones">
+        <a class="btn primary" href="#electronica">Comenzar Investigación</a>
+        <a class="btn" href="#redes">Historia del Internet</a>
+      </div>
+    </section>
+
+    <!-- ELECTRÓNICA -->
+    <section id="electronica" aria-labelledby="electronica-title">
+      <h2 id="electronica-title">Electrónica: Fundamentos y Evolución</h2>
+
+      <div class="card">
+        <h3>¿Qué es la Electrónica?</h3>
+        <p class="lead">La electrónica es la rama de la física y la ingeniería que estudia el control del flujo de electrones mediante dispositivos semiconductores y circuitos. A diferencia de la electricidad convencional que se enfoca en la transmisión de energía, la electrónica se centra en el procesamiento y transmisión de información mediante señales eléctricas.</p>
+
+        <h3>Principios Físicos y Químicos Fundamentales</h3>
+        
+        <h4>Teoría Atómica y Conducción Eléctrica</h4>
+        <p>La base de la electrónica reside en la estructura atómica de los materiales. Los átomos están compuestos por un núcleo con protones y neutrones, rodeado por electrones en órbitas específicas. Los electrones de la capa más externa, llamados electrones de valencia, determinan las propiedades eléctricas del material.</p>
+
+        <div class="highlight-box">
+          <strong>Concepto clave:</strong> En los conductores, los electrones de valencia están débilmente unidos al núcleo y pueden moverse libremente, creando corriente eléctrica. En los aislantes, estos electrones están fuertemente ligados. Los semiconductores tienen propiedades intermedias que pueden ser controladas.
+        </div>
+
+        <h4>Semiconductores: El Corazón de la Electrónica</h4>
+        <p>Los semiconductores son materiales cuya conductividad eléctrica se encuentra entre la de los conductores y los aislantes. Los más utilizados son:</p>
+        <ul>
+          <li><strong>Silicio (Si):</strong> El semiconductor más común en la industria electrónica, con 4 electrones de valencia que permiten formar estructuras cristalinas estables</li>
+          <li><strong>Germanio (Ge):</strong> Utilizado en aplicaciones especializadas y transistores de alta frecuencia</li>
+          <li><strong>Arseniuro de Galio (GaAs):</strong> Empleado en electrónica de alta velocidad y optoelectrónica</li>
+        </ul>
+
+        <h4>Dopaje y Uniones P-N</h4>
+        <p>El dopaje es el proceso químico de introducir impurezas controladas en semiconductores puros para modificar sus propiedades eléctricas:</p>
+        <dl>
+          <dt>Dopaje tipo N</dt>
+          <dd>Se añaden átomos con 5 electrones de valencia (fósforo, arsénico), creando exceso de electrones libres (portadores negativos)</dd>
+          
+          <dt>Dopaje tipo P</dt>
+          <dd>Se añaden átomos con 3 electrones de valencia (boro, galio), creando deficiencia de electrones o "huecos" (portadores positivos)</dd>
+        </dl>
+
+        <p>Cuando se unen regiones tipo P y tipo N, se forma una unión P-N, la base de diodos, transistores y todos los dispositivos semiconductores modernos. En esta unión se crea una zona de deplexión donde los portadores se recombinan, estableciendo un campo eléctrico interno.</p>
+
+        <h4>Efecto Transistor y Amplificación</h4>
+        <p>El transistor, inventado en 1947, aprovecha las propiedades de las uniones semiconductoras para controlar el flujo de corriente. Un pequeño voltaje en la base puede controlar una corriente mucho mayor entre colector y emisor, permitiendo la amplificación de señales y la conmutación digital que es fundamental en los computadores.</p>
+      </div>
+
+      <div class="card">
+        <h3>Historia de la Electrónica</h3>
+        
+        <div class="timeline">
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1897</div>
+            <div><strong>Descubrimiento del Electrón:</strong> J.J. Thomson descubre el electrón mediante experimentos con tubos de rayos catódicos, sentando las bases teóricas de la electrónica</div>
+          </div>
+
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1904</div>
+            <div><strong>Válvula de Vacío (Diodo):</strong> John Ambrose Fleming inventa el diodo de vacío, el primer dispositivo electrónico que permite el flujo unidireccional de corriente</div>
+          </div>
+
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1906</div>
+            <div><strong>Audión (Tríodo):</strong> Lee De Forest desarrolla el tríodo, agregando una rejilla de control que permite amplificación de señales, revolucionando las comunicaciones</div>
+          </div>
+
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1947</div>
+            <div><strong>Invención del Transistor:</strong> John Bardeen, Walter Brattain y William Shockley en Bell Labs crean el primer transistor de contacto puntual, iniciando la era de la electrónica de estado sólido</div>
+          </div>
+
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1958</div>
+            <div><strong>Circuito Integrado:</strong> Jack Kilby (Texas Instruments) y Robert Noyce (Fairchild) desarrollan independientemente el circuito integrado, permitiendo múltiples transistores en un solo chip</div>
+          </div>
+
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1971</div>
+            <div><strong>Microprocesador:</strong> Intel lanza el 4004, el primer microprocesador comercial con 2,300 transistores, marcando el nacimiento de la microelectrónica moderna</div>
+          </div>
+
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1980-2000</div>
+            <div><strong>Era de la Miniaturización:</strong> Desarrollo de tecnologías CMOS, reducción de procesos de manufactura desde 10μm hasta dimensiones submicrométricas</div>
+          </div>
+
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">2000-presente</div>
+            <div><strong>Nanoelectrónica:</strong> Transistores a escala nanométrica (5nm, 3nm), desarrollo de FinFET, GAA (Gate-All-Around), y exploración de tecnologías más allá del silicio (grafeno, nanotubos de carbono)</div>
+          </div>
+        </div>
+
+        <h3>Impacto en la Sociedad</h3>
+        <p>La evolución de la electrónica ha transformado radicalmente la civilización humana. Desde permitir las comunicaciones globales instantáneas hasta hacer posible la computación ubicua, los principios físicos y químicos de la electrónica semiconductor han habilitado la era de la información, la inteligencia artificial, y están impulsando avances en medicina, exploración espacial y sostenibilidad energética.</p>
+      </div>
+    </section>
+
+    <!-- HARDWARE Y SOFTWARE -->
+    <section id="hardware-software" aria-labelledby="hw-sw-title">
+      <h2 id="hw-sw-title">Hardware y Software: Evolución Paralela</h2>
+
+      <div class="card">
+        <h3>Definiciones Fundamentales</h3>
+        <dl>
+          <dt>Hardware</dt>
+          <dd>Conjunto de componentes físicos y tangibles de un sistema computacional: procesadores, memoria, dispositivos de almacenamiento, periféricos y circuitos electrónicos</dd>
+          
+          <dt>Software</dt>
+          <dd>Conjunto de instrucciones, datos y programas que indican al hardware cómo realizar tareas específicas. Incluye sistema operativo, aplicaciones y firmware</dd>
+        </dl>
+
+        <div class="highlight-box">
+          <strong>Principio fundamental:</strong> El hardware proporciona la capacidad de procesamiento físico, mientras que el software define qué procesar y cómo hacerlo. Ambos son interdependientes y han evolucionado en simbiosis.
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Historia del Hardware</h3>
+        
+        <h4>Era Mecánica (1600-1940)</h4>
+        <ul>
+          <li><strong>1642:</strong> Blaise Pascal inventa la Pascalina, primera calculadora mecánica</li>
+          <li><strong>1837:</strong> Charles Babbage diseña la Máquina Analítica, primer concepto de computador programable</li>
+          <li><strong>1890:</strong> Herman Hollerith desarrolla máquinas tabuladoras electromecánicas para el censo de EE.UU.</li>
+        </ul>
+
+        <h4>Era Electromecánica (1940-1950)</h4>
+        <ul>
+          <li><strong>1941:</strong> Konrad Zuse construye el Z3, primer computador programable electromecánico</li>
+          <li><strong>1944:</strong> Harvard Mark I, computador electromecánico de gran escala</li>
+        </ul>
+
+        <h4>Primera Generación: Válvulas de Vacío (1946-1958)</h4>
+        <ul>
+          <li><strong>1946:</strong> ENIAC - 18,000 válvulas de vacío, 30 toneladas, 140 kW de consumo</li>
+          <li><strong>1951:</strong> UNIVAC I - primer computador comercial</li>
+          <li>Características: enormes, costosos, poco fiables, alto consumo energético</li>
+        </ul>
+
+        <h4>Segunda Generación: Transistores (1958-1964)</h4>
+        <ul>
+          <li>Reemplazo de válvulas por transistores de estado sólido</li>
+          <li>Reducción drástica de tamaño y consumo energético</li>
+          <li>Mayor velocidad y confiabilidad</li>
+          <li><strong>IBM 1401:</strong> computador de propósito general más exitoso de la era</li>
+        </ul>
+
+        <h4>Tercera Generación: Circuitos Integrados (1964-1971)</h4>
+        <ul>
+          <li>Múltiples transistores en un solo chip de silicio</li>
+          <li><strong>IBM System/360 (1964):</strong> familia de computadores compatibles</li>
+          <li>Miniaturización continua, desarrollo de mainframes y minicomputadores</li>
+        </ul>
+
+        <h4>Cuarta Generación: Microprocesadores (1971-presente)</h4>
+        <ul>
+          <li><strong>1971:</strong> Intel 4004 - primer microprocesador</li>
+          <li><strong>1981:</strong> IBM PC - estandarización de la computación personal</li>
+          <li><strong>1990s:</strong> Explosión de computadores personales</li>
+          <li><strong>2000s:</strong> Procesadores multinúcleo, computación móvil</li>
+          <li><strong>2020s:</strong> IA en hardware, procesadores neuromórficos, computación cuántica emergente</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Historia del Software</h3>
+
+        <h4>Era Pre-Software (1940-1950)</h4>
+        <p>Los primeros computadores eran programados mediante reconfiguración física de cables y switches. La programación y el hardware eran indistinguibles.</p>
+        <ul>
+          <li>Ada Lovelace (1843): primer algoritmo diseñado para ser procesado por máquina</li>
+          <li>Programación mediante tarjetas perforadas</li>
+        </ul>
+
+        <h4>Lenguajes de Bajo Nivel (1950-1960)</h4>
+        <ul>
+          <li><strong>Código Máquina:</strong> instrucciones binarias directas al procesador</li>
+          <li><strong>Lenguaje Ensamblador:</strong> representación simbólica del código máquina</li>
+          <li><strong>1951:</strong> Primer compilador por Grace Hopper</li>
+        </ul>
+
+        <h4>Lenguajes de Alto Nivel (1957-1970)</h4>
+        <ul>
+          <li><strong>1957:</strong> FORTRAN - primer lenguaje de alto nivel ampliamente usado</li>
+          <li><strong>1958:</strong> LISP - procesamiento de listas, IA</li>
+          <li><strong>1959:</strong> COBOL - aplicaciones de negocio</li>
+          <li><strong>1964:</strong> BASIC - educación en programación</li>
+          <li><strong>1972:</strong> C - lenguaje de sistemas, base de Unix</li>
+        </ul>
+
+        <h4>Era de los Sistemas Operativos (1960-1990)</h4>
+        <ul>
+          <li><strong>1969:</strong> Unix - SO multiusuario y multitarea</li>
+          <li><strong>1981:</strong> MS-DOS - SO para IBM PC</li>
+          <li><strong>1984:</strong> Mac OS - primera GUI comercial exitosa</li>
+          <li><strong>1985:</strong> Windows 1.0 - entorno gráfico para MS-DOS</li>
+          <li><strong>1991:</strong> Linux - kernel de código abierto</li>
+        </ul>
+
+        <h4>Era Moderna (1990-presente)</h4>
+        <ul>
+          <li><strong>Programación Orientada a Objetos:</strong> C++, Java, Python</li>
+          <li><strong>Desarrollo Web:</strong> JavaScript, frameworks modernos</li>
+          <li><strong>Software como Servicio (SaaS):</strong> cloud computing</li>
+          <li><strong>Desarrollo Móvil:</strong> iOS, Android</li>
+          <li><strong>Machine Learning:</strong> TensorFlow, PyTorch</li>
+          <li><strong>DevOps y CI/CD:</strong> automatización del desarrollo</li>
+        </ul>
+
+        <h3>Línea de Tiempo Integrada: Hardware y Software</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Año</th>
+              <th>Hardware</th>
+              <th>Software</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1946</td>
+              <td>ENIAC (válvulas de vacío)</td>
+              <td>Programación por cables</td>
+            </tr>
+            <tr>
+              <td>1951</td>
+              <td>UNIVAC I</td>
+              <td>Primeros compiladores</td>
+            </tr>
+            <tr>
+              <td>1957</td>
+              <td>IBM 704</td>
+              <td>FORTRAN</td>
+            </tr>
+            <tr>
+              <td>1964</td>
+              <td>IBM System/360</td>
+              <td>COBOL, BASIC</td>
+            </tr>
+            <tr>
+              <td>1971</td>
+              <td>Intel 4004</td>
+              <td>C</td>
+            </tr>
+            <tr>
+              <td>1981</td>
+              <td>IBM PC</td>
+              <td>MS-DOS</td>
+            </tr>
+            <tr>
+              <td>1991</td>
+              <td>Procesadores 486</td>
+              <td>Linux</td>
+            </tr>
+            <tr>
+              <td>2000</td>
+              <td>Procesadores Pentium 4</td>
+              <td>Windows XP</td>
+            </tr>
+            <tr>
+              <td>2010</td>
+              <td>Procesadores multinúcleo</td>
+              <td>Android, iOS</td>
+            </tr>
+            <tr>
+              <td>2020</td>
+              <td>Procesadores ARM, Intel, AMD</td>
+              <td>Cloud, IA, DevOps</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- KERNEL -->
+    <section id="kernel" aria-labelledby="kernel-title">
+      <h2 id="kernel-title">Kernel: El Núcleo del Sistema Operativo</h2>
+
+      <div class="card">
+        <h3>¿Qué es el Kernel?</h3>
+        <p>El kernel es el componente central de cualquier sistema operativo. Actúa como intermediario entre el hardware y el software, gestionando los recursos del sistema (memoria, procesador, dispositivos de entrada/salida) y permitiendo que los programas interactúen con el hardware de manera segura y eficiente.</p>
+
+        <h3>Componentes Destacados del Kernel</h3>
+        <ul>
+          <li><strong>Gestión de memoria:</strong> Asigna y libera memoria RAM y virtual para los procesos.</li>
+          <li><strong>Gestión de procesos:</strong> Controla la ejecución de programas, planificando el uso de la CPU.</li>
+          <li><strong>Controladores de dispositivos:</strong> Permite la comunicación entre el hardware y los procesos.</li>
+          <li><strong>Sistema de archivos:</strong> Gestiona el almacenamiento y acceso a archivos en discos y dispositivos.</li>
+          <li><strong>Seguridad y llamadas al sistema:</strong> Protege el sistema y gestiona las solicitudes de los programas.</li>
+        </ul>
+
+        <h3>¿Cómo Funciona el Kernel?</h3>
+        <p>El kernel opera en el nivel más bajo del sistema operativo, recibiendo solicitudes de los programas y gestionando el acceso al hardware. Cuando un programa necesita acceder a un recurso, realiza una llamada al sistema, que el kernel interpreta y ejecuta, devolviendo los resultados al programa.</p>
+
+        <h3>Importancia del Kernel</h3>
+        <p>El kernel es fundamental para la estabilidad, seguridad y eficiencia del sistema operativo. Sin él, los programas no podrían interactuar con el hardware de manera controlada, lo que llevaría a inestabilidad y vulnerabilidades.</p>
+      </div>
+    </section>
+
+    <!-- MICROPROCESADOR -->
+    <section id="micro" aria-labelledby="micro-title">
+      <h2 id="micro-title">Microprocesador: Historia y Evolución</h2>
+
+      <div class="card">
+        <h3>¿Qué es un Microprocesador?</h3>
+        <p>El microprocesador es el cerebro de un computador, encargado de ejecutar instrucciones y procesar datos. Es un circuito integrado que contiene millones de transistores y es responsable de realizar operaciones aritméticas, lógicas y de control.</p>
+
+        <h3>Historia del Microprocesador</h3>
+        <div class="timeline">
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1971</div>
+            <div><strong>Intel 4004:</strong> Primer microprocesador comercial, de 4 bits, 2300 transistores.</div>
+          </div>
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1974</div>
+            <div><strong>Intel 8080:</strong> Primer microprocesador de propósito general, 8 bits.</div>
+          </div>
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1978</div>
+            <div><strong>Intel 8086:</strong> Primer microprocesador de 16 bits, base de la arquitectura x86.</div>
+          </div>
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1985</div>
+            <div><strong>Intel 80386:</strong> Primer microprocesador de 32 bits.</div>
+          </div>
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1993</div>
+            <div><strong>Intel Pentium:</strong> Primer microprocesador de 64 bits.</div>
+          </div>
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">2000s</div>
+            <div><strong>Procesadores multinúcleo:</strong> Intel Core, AMD Ryzen, Apple M1.</div>
+          </div>
+        </div>
+
+        <h3>Importancia del Microprocesador</h3>
+        <p>El microprocesador es la pieza clave que ha permitido la miniaturización y el aumento de la potencia de los computadores. Su evolución ha impulsado la computación personal, los dispositivos móviles y la inteligencia artificial.</p>
+
+        <h3>Tipos de Microprocesadores</h3>
+        <ul>
+          <li><strong>Intel Core:</strong> Serie de procesadores de alto rendimiento para computadoras de escritorio y portátiles.</li>
+          <li><strong>AMD Ryzen:</strong> Procesadores multinúcleo para computadoras de escritorio y portátiles.</li>
+          <li><strong>Apple M1:</strong> Procesador ARM de bajo consumo para Macs.</li>
+          <li><strong>ARM:</strong> Arquitectura de bajo consumo utilizada en smartphones y dispositivos embebidos.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- REDES -->
+    <section id="redes" aria-labelledby="redes-title">
+      <h2 id="redes-title">Redes y la Historia del Internet</h2>
+
+      <div class="card">
+        <h3>Historia del Internet</h3>
+        <p>El internet es la red global de computadoras que permite la comunicación y el intercambio de información a nivel mundial. Su origen se remonta a los años 60 con el desarrollo de ARPANET.</p>
+
+        <h3>ARPANET y el Protocolo TCP/IP</h3>
+        <p>ARPANET fue la primera red de computadoras desarrollada por el Departamento de Defensa de EE.UU. en 1969. Utilizaba el protocolo de conmutación de paquetes, que permitía la transmisión de datos de manera eficiente y resistente a fallas. En 1983, ARPANET adoptó el protocolo TCP/IP, que se convirtió en el estándar para la comunicación en internet.</p>
+
+        <h3>Línea del Tiempo de la Historia del Internet</h3>
+        <div class="timeline">
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1969</div>
+            <div><strong>ARPANET:</strong> Primera red de computadoras.</div>
+          </div>
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1971</div>
+            <div><strong>Correo electrónico:</strong> Primer mensaje enviado por Ray Tomlinson.</div>
+          </div>
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1983</div>
+            <div><strong>TCP/IP:</strong> Estándar para la comunicación en internet.</div>
+          </div>
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1991</div>
+            <div><strong>World Wide Web:</strong> Tim Berners-Lee desarrolla la WWW.</div>
+          </div>
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1993</div>
+            <div><strong>Mosaic:</strong> Primer navegador web gráfico.</div>
+          </div>
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1998</div>
+            <div><strong>Google:</strong> Fundación del motor de búsqueda.</div>
+          </div>
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">2004</div>
+            <div><strong>Facebook:</strong> Lanzamiento de la red social.</div>
+          </div>
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">2005</div>
+            <div><strong>YouTube:</strong> Plataforma de videos.</div>
+          </div>
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">2007</div>
+            <div><strong>iPhone:</strong> Popularización del acceso móvil a internet.</div>
+          </div>
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">2020</div>
+            <div><strong>5G:</strong> Redes móviles de quinta generación.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMPONENTES -->
+    <section id="componentes" aria-labelledby="componentes-title">
+      <h2 id="componentes-title">Componentes Destacados de un Sistema Computacional</h2>
+
+      <div class="card">
+        <h3>Componentes Principales</h3>
+        <ul>
+          <li><strong>Procesador (CPU):</strong> Ejecuta instrucciones y procesa datos.</li>
+          <li><strong>Memoria RAM:</strong> Almacena datos temporalmente para el procesamiento.</li>
+          <li><strong>Disco duro/SSD:</strong> Almacena datos de forma permanente.</li>
+          <li><strong>Placa base:</strong> Conecta y comunica todos los componentes.</li>
+          <li><strong>Fuente de alimentación:</strong> Suministra energía a los componentes.</li>
+          <li><strong>Periféricos:</strong> Dispositivos de entrada/salida (teclado, ratón, monitor).</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- REFERENCIAS -->
+    <div id="modalReferencias" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Referencias</h2>
+          <button class="close-modal">&times;</button>
+        </div>
+        <div class="referencias-lista">
+          <p>[1] Wikipedia - Microprocesador. Disponible en: https://es.wikipedia.org/wiki/Microprocesador</p>
+          <p>[2] Concepto.de - Microprocesador. Disponible en: https://concepto.de/microprocesador/</p>
+          <p>[3] Carballar.com - Breve historia de los microprocesadores. Disponible en: https://carballar.com/breve-historia-de-los-microprocesadores</p>
+          <p>[4] Maestros del Web - Historia de los microprocesadores. Disponible en: https://www.maestrosdelweb.com/historia-de-los-microprocesadores/</p>
+          <p>[5] IONOS - Kernel. Disponible en: https://www.ionos.com/es-us/digitalguide/servidores/know-how/que-es-el-kernel/</p>
+          <p>[6] Geeknetic - ¿Qué es el Kernel? Disponible en: https://www.geeknetic.es/Kernel/que-es-y-para-que-sirve</p>
+          <p>[7] Welivesecurity - ARPANET: El nacimiento de la Internet moderna. Disponible en: https://www.welivesecurity.com/es/we-live-progress/arpanet-nacimiento-internet-moderna/</p>
+          <p>[8] Slideshare - Línea del tiempo del internet. Disponible en: https://es.slideshare.net/slideshow/linea-del-tiempo-del-internet-40564591/40564591</p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="wrapper">
+        <p class="small">© 2025 Arquitectura Computacional. Todos los derechos reservados.</p>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    document.getElementById('btnReferencias').addEventListener('click', function() {
+      document.getElementById('modalReferencias').classList.add('show');
+    });
+    document.querySelector('.close-modal').addEventListener('click', function() {
+      document.getElementById('modalReferencias').classList.remove('show');
+    });
+    document.getElementById('modalReferencias').addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>
